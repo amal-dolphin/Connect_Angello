@@ -384,7 +384,7 @@ textarea { resize: vertical; min-height: 105px; line-height: 1.6; }
   <div class="hero-eyebrow">Dolphin Retail Media</div>
   <h1>Let's <em>Grow</em> Your Brand</h1>
   <p>Whether you're looking to advertise across our venue network or explore a product partnership, we'd love to hear from you.</p>
-  <a href="https://map.dolphin-one.com/" target="_blank" rel="noopener noreferrer">
+  <a class="venue-pill" href="https://map.dolphin-one.com/" target="_blank">
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
       <path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" fill="currentColor"/>
     </svg>
@@ -493,73 +493,51 @@ textarea { resize: vertical; min-height: 105px; line-height: 1.6; }
 </footer>
 
 <script>
+  // =====================================================
+  // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW
+  // Sheet: https://docs.google.com/spreadsheets/d/1iwX2m0aySukNZjlibSM0RM9xf_NzI2pK5gi91J0qAa0/edit
+  // =====================================================
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUAhdyK1K6Iynq_XczkjAP7emRbL3N8ohiGdbEpSsal5KOWnADRaETXICqRCZ54gL_9w/exec";
-
-  const form = document.getElementById("leadForm");
-  const submitBtn = document.getElementById("submitBtn");
-  const errorMsg = document.getElementById("errorMsg");
-  const successState = document.getElementById("successState");
-
-  form.addEventListener("submit", async function (e) {
+  document.getElementById('leadForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-
-    errorMsg.style.display = "none";
-    errorMsg.textContent = "Something went wrong. Please try again in a moment.";
-
-    const fullName = document.getElementById("fullName").value.trim();
-    const businessName = document.getElementById("businessName").value.trim();
-    const emailEl = document.getElementById("email");
-    const email = emailEl.value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const comments = document.getElementById("comments").value.trim();
     const interest = document.querySelector('input[name="interest"]:checked');
+    if (!interest) { alert('Please select what you are interested in.'); return; }
 
-    if (!fullName || !businessName || !email || !phone || !interest) {
-      errorMsg.textContent = "Please fill in all required fields.";
-      errorMsg.style.display = "block";
-      return;
-    }
+    const btn = document.getElementById('submitBtn');
+    const errMsg = document.getElementById('errorMsg');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+    errMsg.style.display = 'none';
 
-    if (!emailEl.checkValidity()) {
-      errorMsg.textContent = "Please enter a valid email address.";
-      errorMsg.style.display = "block";
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = "Sending...";
-
-    const formData = new FormData();
-    formData.append("fullName", fullName);
-    formData.append("businessName", businessName);
-    formData.append("email", email);
-    formData.append("phone", phone);
-    formData.append("interest", interest.value);
-    formData.append("comments", comments);
-    formData.append("timestamp", new Date().toISOString());
+    const data = {
+      fullName:     document.getElementById('fullName').value,
+      businessName: document.getElementById('businessName').value,
+      email:        document.getElementById('email').value,
+      phone:        document.getElementById('phone').value,
+      interest:     interest.value,
+      comments:     document.getElementById('comments').value,
+      timestamp:    new Date().toLocaleString()
+    };
 
     try {
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST",
+      // Use URLSearchParams — works reliably with Google Apps Script no-cors
+      const formData = new URLSearchParams();
+      Object.keys(data).forEach(key => formData.append(key, data[key]));
+
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
         body: formData
       });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Submission failed.");
-      }
-
-      form.style.display = "none";
-      successState.style.display = "block";
-    } catch (err) {
-      console.error("Form submission error:", err);
-      errorMsg.textContent = err.message || "Submission failed. Try again.";
-      errorMsg.style.display = "block";
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = "Send My Inquiry →";
+      document.getElementById('leadForm').style.display = 'none';
+      document.getElementById('successState').style.display = 'block';
+    } catch(err) {
+      errMsg.style.display = 'block';
+      btn.textContent = 'Send My Inquiry \u2192';
+      btn.disabled = false;
     }
   });
 </script>
+
 </body>
 </html>
